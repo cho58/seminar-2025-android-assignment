@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.seminar_assignment_2025.game.Game2048Screen
+import com.example.seminar_assignment_2025.search.SearchScreen
 
 sealed class Tab(val title: String) {
     data object Home : Tab("Home")
@@ -79,7 +80,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             ) { innerPadding ->
-                // 선택 구현: 애니메이션 (이전 인덱스 vs 현재 인덱스 비교로 방향 결정)
+                // 애니메이션 (이전 인덱스 vs 현재 인덱스 비교로 방향 결정)
                 val isForward = currentIndex > previousIndex
                 val duration = 220
 
@@ -102,7 +103,7 @@ class MainActivity : ComponentActivity() {
                 ) { idx ->
                     when (tabs[idx]) {
                         Tab.Home    -> CenterText("Home")
-                        Tab.Search  -> CenterText("Search")
+                        Tab.Search  -> SearchScreen()
                         Tab.AppTab  -> CenterText("App")
                         Tab.Game    -> Game2048Screen()
                         Tab.Profile -> ProfileXmlHost()
