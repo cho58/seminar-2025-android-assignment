@@ -61,4 +61,7 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.compose.material.icons.ext)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+
+    implementation(libs.androidx.datastore.preferences.v111)
+    implementation(libs.kotlinx.serialization.json)
 }

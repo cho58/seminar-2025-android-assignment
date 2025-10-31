@@ -1,5 +1,6 @@
 package com.example.seminar_assignment_2025.search
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -14,6 +15,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -22,8 +27,11 @@ import com.example.seminar_assignment_2025.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchScreen() {
+fun SearchScreen(viewModel: SearchViewModel) {
     var query by remember { mutableStateOf("") }
+    val recentList by viewModel.recentList.collectAsState()
+    var isSearchFocused by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
 
     Column(
         modifier = Modifier
@@ -31,19 +39,53 @@ fun SearchScreen() {
             .padding(16.dp)
     ) {
 
-        SearchBar(text = query,
-            onTextChange = { query = it },
+        SearchBar(
+            text = query,
+            onTextChange = { viewModel.query.value = it },
             onSearch = {
-                // 나중에 검색 실행할 곳
+                viewModel.addRecent(query)
+                focusManager.clearFocus()
+            },
+            onClearText = { viewModel.query.value = "" },
+            onFocusChange = { focused ->
+                isSearchFocused = focused
             }
         )
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        EmptyView(
-            modifier = Modifier
-                .fillMaxSize()
-                .weight(1f)
-        )
+        if (query.isBlank() && isSearchFocused) {
+            if (recentList.isEmpty()) {
+                Box(modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                        contentAlignment = Alignment.Center
+                ) {
+                    Text("최근 검색어가 없습니다.", color = Color.Gray)
+                }
+            } else {
+                RecentSearchSection(
+                    items = recentList,
+                    onClickItem = { keyword ->
+                        viewModel.query.value = keyword
+                        focusManager.clearFocus()
+                        isSearchFocused = false
+                    },
+                    onDeleteItem = { keyword ->
+                        viewModel.deleteRecent(keyword)
+                    },
+                    onClearAll = {
+                        viewModel.clearAll()
+                    }
+                )
+            }
+        } else {
+            Spacer(modifier = Modifier.height(32.dp))
+            EmptyView(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .weight(1f)
+            )
+        }
     }
 }
 
@@ -80,58 +122,122 @@ fun SearchBar(
     text: String,
     onTextChange: (String) -> Unit,
     onSearch: () -> Unit,
+    onClearText: () -> Unit,
+    onFocusChange: (Boolean) -> Unit,   // ✅ 새로 추가
     modifier: Modifier = Modifier
 ) {
-    val shape = RoundedCornerShape(14.dp)  // 이미지처럼 크게 둥글게
+    val shape = RoundedCornerShape(14.dp)
 
     Surface(
         modifier = modifier
             .fillMaxWidth()
             .height(48.dp),
         shape = shape,
-        color = Color(0xFFF5F5F5),          // 살짝 회색 배경
-        shadowElevation = 0.dp              // 그림자 없음
+        color = Color(0xFFF5F5F5),
+        shadowElevation = 0.dp
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 12.dp)
+                .padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = null,
                 tint = Color(0xFF6D6D6D)
             )
-
             Spacer(modifier = Modifier.width(8.dp))
 
-            // 진짜 입력 영역
             BasicTextField(
                 value = text,
                 onValueChange = onTextChange,
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                textStyle = LocalTextStyle.current.copy(
-                    color = Color.Black,
-                    fontSize = 14.sp
-                ),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(
                     onSearch = { onSearch() }
                 ),
-                decorationBox = { innerTextField ->
+                textStyle = LocalTextStyle.current.copy(
+                    color = Color.Black,
+                    fontSize = 14.sp
+                ),
+                modifier = Modifier
+                    .weight(1f)
+                    .onFocusChanged { state ->
+                        onFocusChange(state.isFocused)
+                    },
+                decorationBox = { inner ->
                     if (text.isEmpty()) {
-                        Text(
-                            text = "영화 검색...",
+                        Text("영화 검색...",
                             color = Color(0xFFB0B0B0),
                             fontSize = 14.sp
                         )
                     }
-                    innerTextField()
+                    inner()
                 }
             )
+
+            if (text.isNotEmpty()) {
+                Spacer(modifier = Modifier.width(4.dp))
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "입력 지우기",
+                    tint = Color(0xFF6D6D6D),
+                    modifier = Modifier
+                        .size(20.dp)
+                        .clickable { onClearText() }
+                )
+            }
         }
     }
 }
+
+
+@Composable
+fun RecentSearchSection(
+    items: List<String>,
+    onClickItem: (String) -> Unit,
+    onDeleteItem: (String) -> Unit,
+    onClearAll: () -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("최근 검색어", fontWeight = FontWeight.SemiBold)
+            Text(
+                "전체 삭제",
+                color = Color(0xFF2166FF),
+                modifier = Modifier.clickable { onClearAll() }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        items.forEach { keyword ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onClickItem(keyword) }
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Default.AccessTime, null, tint = Color.Gray, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(keyword, modifier = Modifier.weight(1f))
+                Icon(
+                    Icons.Default.Close,
+                    contentDescription = "삭제",
+                    tint = Color.Gray,
+                    modifier = Modifier
+                        .size(18.dp)
+                        .clickable { onDeleteItem(keyword) }
+                )
+            }
+        }
+    }
+}
+
 

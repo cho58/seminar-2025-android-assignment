@@ -33,7 +33,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.seminar_assignment_2025.game.Game2048Screen
+import com.example.seminar_assignment_2025.search.RecentSearchRepository
 import com.example.seminar_assignment_2025.search.SearchScreen
+import com.example.seminar_assignment_2025.search.SearchViewModel
 
 sealed class Tab(val title: String) {
     data object Home : Tab("Home")
@@ -47,6 +49,8 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val repo = RecentSearchRepository(applicationContext)
+        val vm = SearchViewModel(repo)
         setContent {
             val tabs = listOf(Tab.Home, Tab.Search, Tab.AppTab, Tab.Game, Tab.Profile)
             var currentIndex by remember { mutableStateOf(0) }
@@ -103,7 +107,7 @@ class MainActivity : ComponentActivity() {
                 ) { idx ->
                     when (tabs[idx]) {
                         Tab.Home    -> CenterText("Home")
-                        Tab.Search  -> SearchScreen()
+                        Tab.Search  -> SearchScreen(viewModel = vm)
                         Tab.AppTab  -> CenterText("App")
                         Tab.Game    -> Game2048Screen()
                         Tab.Profile -> ProfileXmlHost()
@@ -121,7 +125,6 @@ private fun CenterText(text: String) {
     }
 }
 
-/** Profile 탭: 지난 과제의 XML을 Compose에서 띄우기 */
 @Composable
 private fun ProfileXmlHost() {
     val context = LocalContext.current
