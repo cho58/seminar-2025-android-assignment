@@ -30,10 +30,11 @@ import androidx.compose.ui.layout.ContentScale
 import com.example.seminar_assignment_2025.R
 import coil.compose.AsyncImage
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.navigation.NavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchScreen(viewModel: SearchViewModel) {
+fun SearchScreen(viewModel: SearchViewModel, navController: NavController) {
     val query by viewModel.searchQuery.collectAsState()
     val recentList by viewModel.recentSearches.collectAsState()
     val searchResult by viewModel.searchResults.collectAsState()
@@ -87,7 +88,14 @@ fun SearchScreen(viewModel: SearchViewModel) {
                     contentPadding = PaddingValues(vertical = 4.dp)
                 ) {
                     items(searchResult) { movie ->
-                        MovieItem(movie = movie)
+                        MovieItem(
+                            movie = movie,
+                            onClick = {
+                                // 3. ViewModel에 영화 선택 + 상세 페이지로 이동
+                                viewModel.selectMovie(movie)
+                                navController.navigate("detail")
+                            }
+                        )
                         Spacer(modifier = Modifier.height(12.dp))
                     }
                 }
@@ -204,7 +212,7 @@ fun RecentSearchSection(
 }
 
 @Composable
-fun MovieItem(movie: Movie) {
+fun MovieItem(movie: Movie, onClick: () -> Unit) {
     // 스펙: 포스터 URL 조합
     val imageUrl = "https://image.tmdb.org/t/p/w500${movie.poster_path}"
 
@@ -218,7 +226,7 @@ fun MovieItem(movie: Movie) {
     val rating = String.format("%.1f", movie.vote_average)
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation(2.dp),
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(

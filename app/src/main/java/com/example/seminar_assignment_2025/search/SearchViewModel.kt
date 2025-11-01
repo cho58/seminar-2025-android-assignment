@@ -22,7 +22,9 @@ class SearchViewModel(
     private val _searchResults = MutableStateFlow<List<Movie>>(emptyList())
     val searchResults = _searchResults.asStateFlow()
 
-    // 스펙: 검색어 바의 'X' 버튼
+    private val _selectedMovie = MutableStateFlow<Movie?>(null)
+    val selectedMovie = _selectedMovie.asStateFlow()
+
     fun onClearQuery() {
         _searchQuery.value = ""
     }
@@ -59,6 +61,10 @@ class SearchViewModel(
             // 2. 최근 검색어에 저장
             recentRepo.addSearch(query)
         }
+    }
+
+    fun selectMovie(movie: Movie) {
+        _selectedMovie.value = movie
     }
 }
 

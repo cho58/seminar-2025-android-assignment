@@ -66,4 +66,5 @@ dependencies {
     implementation(libs.androidx.datastore.preferences.v111)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.coil.compose)
+    implementation(libs.navigation.compose)
 }

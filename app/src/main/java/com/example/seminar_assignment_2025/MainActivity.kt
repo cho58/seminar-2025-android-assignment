@@ -37,9 +37,13 @@ import com.example.seminar_assignment_2025.search.MovieRepositoryImpl
 import com.example.seminar_assignment_2025.search.RecentSearchRepository
 import com.example.seminar_assignment_2025.search.SearchScreen
 import com.example.seminar_assignment_2025.search.SearchViewModel
-import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.navigation.NavController
 import com.example.seminar_assignment_2025.search.SearchViewModelFactory
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.example.seminar_assignment_2025.search.MovieDetailScreen
 
 sealed class Tab(val title: String) {
     data object Home : Tab("Home")
@@ -63,67 +67,110 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            val tabs = listOf(Tab.Home, Tab.Search, Tab.AppTab, Tab.Game, Tab.Profile)
+            val navController = rememberNavController()
+
             var currentIndex by remember { mutableStateOf(0) }
             var previousIndex by remember { mutableStateOf(0) }
 
-            Scaffold(
-                bottomBar = {
-                    NavigationBar {
-                        tabs.forEachIndexed { index, tab ->
-                            NavigationBarItem(
-                                selected = currentIndex == index,
-                                onClick = {
-                                    previousIndex = currentIndex
-                                    currentIndex = index
-                                },
-                                icon = {
-                                    Icon(
-                                        imageVector = when (tab) {
-                                            Tab.Home -> Icons.Default.Home
-                                            Tab.Search -> Icons.Default.Search
-                                            Tab.AppTab -> Icons.Default.Apps
-                                            Tab.Game -> Icons.Default.Gamepad
-                                            Tab.Profile -> Icons.Default.AccountCircle
-                                        },
-                                        contentDescription = tab.title
-                                    )
-                                },
-                                label = { Text(tab.title) }
-                            )
-                        }
-                    }
-                }
-            ) { innerPadding ->
-                // 애니메이션 (이전 인덱스 vs 현재 인덱스 비교로 방향 결정)
-                val isForward = currentIndex > previousIndex
-                val duration = 220
+            NavHost(navController = navController, startDestination = "main") {
 
-                AnimatedContent(
-                    targetState = currentIndex,
-                    transitionSpec = {
-                        val slideIn = slideInHorizontally(
-                            animationSpec = tween(duration),
-                            initialOffsetX = { if (isForward) it else -it }
-                        ) + fadeIn(tween(duration))
-                        val slideOut = slideOutHorizontally(
-                            animationSpec = tween(duration),
-                            targetOffsetX = { if (isForward) -it else it }
-                        ) + fadeOut(tween(duration))
-                        slideIn togetherWith slideOut using SizeTransform(clip = false)
-                    },
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                ) { idx ->
-                    when (tabs[idx]) {
-                        Tab.Home    -> CenterText("Home")
-                        Tab.Search  -> SearchScreen(viewModel = vm)
-                        Tab.AppTab  -> CenterText("App")
-                        Tab.Game    -> Game2048Screen()
-                        Tab.Profile -> ProfileXmlHost()
+                // 3. "메인 화면" (기존의 탭 + Scaffold)
+                composable("main") {
+                    MainScreen(
+                        viewModel = vm,
+                        navController = navController,
+
+                        currentIndex = currentIndex,
+                        previousIndex = previousIndex,
+                        onTabSelected = { newIndex ->
+                            previousIndex = currentIndex
+                            currentIndex = newIndex
+                        }
+                    )
+                }
+
+                // 4. "상세 화면" (신규)
+                composable("detail") {
+                    val movie by vm.selectedMovie.collectAsState()
+                    movie?.let {
+                        MovieDetailScreen(
+                            movie = it,
+                            onBackClicked = { navController.popBackStack() }
+                        )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun MainScreen(
+    viewModel: SearchViewModel,
+    navController: NavController,
+   currentIndex: Int,
+   previousIndex: Int,
+   onTabSelected: (Int) -> Unit
+) {
+    val tabs = listOf(Tab.Home, Tab.Search, Tab.AppTab, Tab.Game, Tab.Profile)
+
+    Scaffold(
+        bottomBar = {
+            NavigationBar {
+                tabs.forEachIndexed { index, tab ->
+                    NavigationBarItem(
+                        selected = currentIndex == index,
+                        onClick = {
+                            onTabSelected(index)
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = when (tab) {
+                                    Tab.Home -> Icons.Default.Home
+                                    Tab.Search -> Icons.Default.Search
+                                    Tab.AppTab -> Icons.Default.Apps
+                                    Tab.Game -> Icons.Default.Gamepad
+                                    Tab.Profile -> Icons.Default.AccountCircle
+                                },
+                                contentDescription = tab.title
+                            )
+                        },
+                        label = { Text(tab.title) }
+                    )
+                }
+            }
+        }
+    ) { innerPadding ->
+        // 애니메이션 (이전 인덱스 vs 현재 인덱스 비교로 방향 결정)
+        val isForward = currentIndex > previousIndex
+        val duration = 220
+
+        AnimatedContent(
+            targetState = currentIndex,
+            transitionSpec = {
+                val slideIn = slideInHorizontally(
+                    animationSpec = tween(duration),
+                    initialOffsetX = { if (isForward) it else -it }
+                ) + fadeIn(tween(duration))
+                val slideOut = slideOutHorizontally(
+                    animationSpec = tween(duration),
+                    targetOffsetX = { if (isForward) -it else it }
+                ) + fadeOut(tween(duration))
+                slideIn togetherWith slideOut using SizeTransform(clip = false)
+            },
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) { idx ->
+            when (tabs[idx]) {
+                Tab.Home    -> CenterText("Home")
+                Tab.Search  -> SearchScreen(
+                    viewModel = viewModel,
+                    navController = navController
+                )
+                Tab.AppTab  -> CenterText("App")
+                Tab.Game    -> Game2048Screen()
+                Tab.Profile -> ProfileXmlHost()
             }
         }
     }
