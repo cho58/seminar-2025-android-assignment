@@ -15,59 +15,76 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.seminar_assignment_2025.ui.GameScreen
 import com.example.seminar_assignment_2025.ui.search.SearchScreen
+import com.example.seminar_assignment_2025.ui.detail.MovieDetailScreen
+import com.example.seminar_assignment_2025.data.Movie
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            NavGenerate()
-        }
-    }
-}
-
-enum class NavItem(val label: String, val icon: ImageVector) {
-    Home("Home", Icons.Filled.Home),
-    Search("Search", Icons.Filled.Search),
-    App("App", Icons.Filled.ShoppingCart),
-    Game("Game", Icons.Filled.PlayArrow),
-    Profile("Profile", Icons.Filled.Person)
-}
-
-@Composable
-fun NavGenerate() {
-    var selectedMenu by remember { mutableStateOf(NavItem.Home) }
-    Scaffold(
-        bottomBar = {
-            NavigationBar {
-                NavItem.values().forEach { item ->
-                    NavigationBarItem(
-                        selected = (selectedMenu == item),
-                        onClick = { selectedMenu = item },
-                        icon = { Icon(item.icon, contentDescription = item.label) },
-                        label = { Text(item.label) }
-                    )
+            val navController = rememberNavController()
+            Scaffold(
+                bottomBar = { BottomNavigationBar(navController) }
+            ) { innerPadding ->
+                NavHost(navController, startDestination = NavItem.Home.route, Modifier.padding(innerPadding)) {
+                    composable(NavItem.Home.route) { HomeScreen(Modifier.padding(innerPadding)) }
+                    composable(NavItem.Search.route) { SearchScreen(navController = navController) }
+                    composable(NavItem.App.route) { AppScreen(Modifier.padding(innerPadding)) }
+                    composable(NavItem.Game.route) { GameScreen() }
+                    composable(NavItem.Profile.route) { ProfileScreen(Modifier.padding(innerPadding)) }
+                    composable("movieDetail") { backStackEntry ->
+                        val movie = navController.previousBackStackEntry?.savedStateHandle?.get<Movie>("movie")
+                        if (movie != null) {
+                            MovieDetailScreen(movie = movie)
+                        }
+                    }
                 }
             }
         }
-    ) { innerPadding ->
-        when (selectedMenu) {
-            NavItem.Home -> HomeScreen(Modifier.padding(innerPadding))
-            NavItem.Search -> SearchScreen(Modifier.padding(innerPadding))
-            NavItem.App -> AppScreen(Modifier.padding(innerPadding))
-            NavItem.Game -> GameScreen(Modifier.padding(innerPadding))
-            NavItem.Profile -> ProfileScreen(Modifier.padding(innerPadding))
+    }
+}
+
+enum class NavItem(val route: String, val label: String, val icon: ImageVector) {
+    Home("home", "Home", Icons.Filled.Home),
+    Search("search", "Search", Icons.Filled.Search),
+    App("app", "App", Icons.Filled.ShoppingCart),
+    Game("game", "Game", Icons.Filled.PlayArrow),
+    Profile("profile", "Profile", Icons.Filled.Person)
+}
+
+@Composable
+fun BottomNavigationBar(navController: NavHostController) {
+    var selectedMenu by remember { mutableStateOf(NavItem.Home.route) }
+
+    NavigationBar {
+        NavItem.values().forEach { item ->
+            NavigationBarItem(
+                selected = selectedMenu == item.route,
+                onClick = {
+                    selectedMenu = item.route
+                    navController.navigate(item.route) {
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+                icon = { Icon(item.icon, contentDescription = item.label) },
+                label = { Text(item.label) }
+            )
         }
     }
 }
 
-@Composable
-fun HomeScreen(modifier: Modifier = Modifier) {
+@Composable fun HomeScreen(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -80,8 +97,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     }
 }
 
-@Composable
-fun AppScreen(modifier: Modifier = Modifier) {
+@Composable fun AppScreen(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -94,8 +110,7 @@ fun AppScreen(modifier: Modifier = Modifier) {
     }
 }
 
-@Composable
-fun ProfileScreen(modifier: Modifier = Modifier) {
+@Composable fun ProfileScreen(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
