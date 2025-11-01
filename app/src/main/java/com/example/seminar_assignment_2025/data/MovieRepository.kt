@@ -11,7 +11,10 @@ data class MovieDto(
     @SerialName("release_date") val releaseDate: String,
     @SerialName("vote_average") val voteAverage: Double,
     @SerialName("poster_path") val posterPath: String?,
-    @SerialName("genre_ids") val genreIds: List<Int>
+    @SerialName("genre_ids") val genreIds: List<Int>,
+    @SerialName("backdrop_path") val backdropPath: String?,
+    val overview: String?,
+    val popularity: Double
 )
 
 @Serializable
@@ -33,7 +36,7 @@ class MovieRepository {
   "genre_ids": [
     27
   ],
-  "id": 103839
+  "id": 1038392,
   "original_language": "en",
   "original_title": "The Conjuring: Last Rites",
   "overview": "Paranormal investigators Ed and Lorraine Warren take on one last terrifying case involving mysterious entities they must confront.",
@@ -2087,10 +2090,7 @@ class MovieRepository {
     }
 
     private val genreMap: Map<Int, String> by lazy {
-        json.decodeFromString<GenreListDto>(genreMapData).genres.associateBy(
-            keySelector = { it.id },
-            valueTransform = { it.name }
-        )
+        json.decodeFromString<GenreListDto>(genreMapData).genres.associateBy( { it.id }, { it.name } )
     }
 
 
@@ -2105,7 +2105,10 @@ class MovieRepository {
                     releaseDate = dto.releaseDate,
                     voteAverage = dto.voteAverage,
                     posterPath = dto.posterPath ?: "",
-                    genreIds = dto.genreIds
+                    genreIds = dto.genreIds,
+                    backdropPath = dto.backdropPath ?: "",
+                    overview = dto.overview ?: "",
+                    popularity = dto.popularity
                 )
             }
         }

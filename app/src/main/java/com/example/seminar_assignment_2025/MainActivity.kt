@@ -3,9 +3,9 @@ package com.example.seminar_assignment_2025
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.Icon
@@ -14,10 +14,10 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -45,7 +45,7 @@ class MainActivity : AppCompatActivity() {
                     composable("movieDetail") { backStackEntry ->
                         val movie = navController.previousBackStackEntry?.savedStateHandle?.get<Movie>("movie")
                         if (movie != null) {
-                            MovieDetailScreen(movie = movie)
+                            MovieDetailScreen(movie = movie, navController = navController)
                         }
                     }
                 }
@@ -53,6 +53,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 }
+
 
 enum class NavItem(val route: String, val label: String, val icon: ImageVector) {
     Home("home", "Home", Icons.Filled.Home),

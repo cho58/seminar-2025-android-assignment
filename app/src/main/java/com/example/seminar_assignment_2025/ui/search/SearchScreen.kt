@@ -230,7 +230,7 @@ fun MovieItem(movie: Movie, viewModel: SearchViewModel, onClick: () -> Unit) {
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Default.Star, // Changed from painterResource
+                        imageVector = Icons.Default.Star,
                         contentDescription = null,
                         modifier = Modifier.size(16.dp),
                         tint = Color(0xFFFFC107)
