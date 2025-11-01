@@ -33,9 +33,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.seminar_assignment_2025.game.Game2048Screen
+import com.example.seminar_assignment_2025.search.MovieRepositoryImpl
 import com.example.seminar_assignment_2025.search.RecentSearchRepository
 import com.example.seminar_assignment_2025.search.SearchScreen
 import com.example.seminar_assignment_2025.search.SearchViewModel
+import androidx.activity.compose.setContent
+import androidx.activity.viewModels
+import com.example.seminar_assignment_2025.search.SearchViewModelFactory
 
 sealed class Tab(val title: String) {
     data object Home : Tab("Home")
@@ -46,11 +50,18 @@ sealed class Tab(val title: String) {
 }
 
 class MainActivity : ComponentActivity() {
+    private val vm: SearchViewModel by viewModels {
+        val movieRepo = MovieRepositoryImpl()
+        // 1. RecentSearchRepository 생성 (Context 전달)
+        val recentRepo = RecentSearchRepository(applicationContext)
+        // 2. 팩토리에 두 개의 Repository 전달
+        SearchViewModelFactory(movieRepo, recentRepo)
+    }
+
     @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val repo = RecentSearchRepository(applicationContext)
-        val vm = SearchViewModel(repo)
+
         setContent {
             val tabs = listOf(Tab.Home, Tab.Search, Tab.AppTab, Tab.Game, Tab.Profile)
             var currentIndex by remember { mutableStateOf(0) }

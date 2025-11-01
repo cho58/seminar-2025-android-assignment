@@ -2,11 +2,14 @@ package com.example.seminar_assignment_2025.search
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,14 +25,18 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import com.example.seminar_assignment_2025.R
-
+import coil.compose.AsyncImage
+import androidx.compose.ui.graphics.RectangleShape
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(viewModel: SearchViewModel) {
-    var query by remember { mutableStateOf("") }
-    val recentList by viewModel.recentList.collectAsState()
+    val query by viewModel.searchQuery.collectAsState()
+    val recentList by viewModel.recentSearches.collectAsState()
+    val searchResult by viewModel.searchResults.collectAsState()
     var isSearchFocused by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
 
@@ -39,52 +46,83 @@ fun SearchScreen(viewModel: SearchViewModel) {
             .padding(16.dp)
     ) {
 
-        SearchBar(
-            text = query,
-            onTextChange = { viewModel.query.value = it },
-            onSearch = {
-                viewModel.addRecent(query)
-                focusManager.clearFocus()
+        OutlinedTextField(
+            value = query,
+            onValueChange = viewModel::onQueryChanged,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+                .onFocusChanged { focusState ->
+                    isSearchFocused = focusState.isFocused
+                },
+            placeholder = { Text("영화 검색...") }, // 스펙 이미지 참고
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+            // 스펙: 검색 바에 X 버튼
+            trailingIcon = {
+                if (query.isNotEmpty()) {
+                    IconButton(onClick = viewModel::onClearQuery) {
+                        Icon(Icons.Default.Clear, contentDescription = "Clear query")
+                    }
+                }
             },
-            onClearText = { viewModel.query.value = "" },
-            onFocusChange = { focused ->
-                isSearchFocused = focused
-            }
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(onSearch = {
+                viewModel.onSearchClicked()
+            }),
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (query.isBlank() && isSearchFocused) {
-            if (recentList.isEmpty()) {
-                Box(modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 16.dp),
-                        contentAlignment = Alignment.Center
+        when {
+            // 1) 검색 결과가 있으면 → 결과 리스트
+            searchResult.isNotEmpty() -> {
+                Text(
+                    text = "검색 결과 ${searchResult.size}개",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(vertical = 4.dp)
                 ) {
-                    Text("최근 검색어가 없습니다.", color = Color.Gray)
-                }
-            } else {
-                RecentSearchSection(
-                    items = recentList,
-                    onClickItem = { keyword ->
-                        viewModel.query.value = keyword
-                        focusManager.clearFocus()
-                        isSearchFocused = false
-                    },
-                    onDeleteItem = { keyword ->
-                        viewModel.deleteRecent(keyword)
-                    },
-                    onClearAll = {
-                        viewModel.clearAll()
+                    items(searchResult) { movie ->
+                        MovieItem(movie = movie)
+                        Spacer(modifier = Modifier.height(12.dp))
                     }
+                }
+            }
+
+            // 2) 검색창이 비어 있고, 포커스가 있을 때 → 최근 검색어
+            query.isBlank() && isSearchFocused -> {
+                if (recentList.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("최근 검색어가 없습니다.", color = Color.Gray)
+                    }
+                } else {
+                    RecentSearchSection(
+                        items = recentList,
+                        onClickItem = { keyword ->
+                            viewModel.RecentSearchItemClicked(keyword)
+                            focusManager.clearFocus()
+                            isSearchFocused = false
+                        },
+                        onDeleteItem = { kw -> viewModel.deleteRecent(kw) },
+                        onClearAll = { viewModel.clearRecent() }
+                    )
+                }
+            }
+
+            else -> {
+                EmptyView(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f)
                 )
             }
-        } else {
-            Spacer(modifier = Modifier.height(32.dp))
-            EmptyView(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .weight(1f)
-            )
         }
     }
 }
@@ -114,81 +152,6 @@ fun EmptyView(modifier: Modifier = Modifier) {
             color = Color.Gray,
             fontSize = 14.sp
         )
-    }
-}
-
-@Composable
-fun SearchBar(
-    text: String,
-    onTextChange: (String) -> Unit,
-    onSearch: () -> Unit,
-    onClearText: () -> Unit,
-    onFocusChange: (Boolean) -> Unit,   // ✅ 새로 추가
-    modifier: Modifier = Modifier
-) {
-    val shape = RoundedCornerShape(14.dp)
-
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(48.dp),
-        shape = shape,
-        color = Color(0xFFF5F5F5),
-        shadowElevation = 0.dp
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.Search,
-                contentDescription = null,
-                tint = Color(0xFF6D6D6D)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-
-            BasicTextField(
-                value = text,
-                onValueChange = onTextChange,
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(
-                    onSearch = { onSearch() }
-                ),
-                textStyle = LocalTextStyle.current.copy(
-                    color = Color.Black,
-                    fontSize = 14.sp
-                ),
-                modifier = Modifier
-                    .weight(1f)
-                    .onFocusChanged { state ->
-                        onFocusChange(state.isFocused)
-                    },
-                decorationBox = { inner ->
-                    if (text.isEmpty()) {
-                        Text("영화 검색...",
-                            color = Color(0xFFB0B0B0),
-                            fontSize = 14.sp
-                        )
-                    }
-                    inner()
-                }
-            )
-
-            if (text.isNotEmpty()) {
-                Spacer(modifier = Modifier.width(4.dp))
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "입력 지우기",
-                    tint = Color(0xFF6D6D6D),
-                    modifier = Modifier
-                        .size(20.dp)
-                        .clickable { onClearText() }
-                )
-            }
-        }
     }
 }
 
@@ -240,4 +203,88 @@ fun RecentSearchSection(
     }
 }
 
+@Composable
+fun MovieItem(movie: Movie) {
+    // 스펙: 포스터 URL 조합
+    val imageUrl = "https://image.tmdb.org/t/p/w500${movie.poster_path}"
+
+    // 스펙: 연도 (release_date에서 앞 4자리)
+    val year = movie.release_date.take(4)
+
+    // 스펙: 장르 (ID 변환)
+    val genres = GenreMapper.getGenreNames(movie.genre_ids)
+
+    // 스펙: 평점 (소수점 첫째 자리)
+    val rating = String.format("%.1f", movie.vote_average)
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(2.dp),
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min)
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // 1. 포스터 (Coil 사용)
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = movie.title,
+                modifier = Modifier
+                    .width(100.dp)
+                    .height(150.dp)
+                    .clip(RoundedCornerShape(8.dp)),
+                contentScale = ContentScale.Crop
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            // 2. 영화 정보
+            Column(
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(movie.title,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color=Color.Black
+                    )
+                    Text(
+                        text = year,
+                        fontSize = 14.sp,
+                        color = Color(0xFF424242)
+                    )
+                    Text(
+                        text = genres,
+                        fontSize = 14.sp,
+                        color = Color(0xFFD3D3D3)
+                    )
+                }
+
+                // 3. 평점 (별 아이콘 + 숫자)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.Star,
+                        contentDescription = "Rating",
+                        tint = Color(0xFFFFC107),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(rating,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = Color.Black
+                    )
+                }
+            }
+        }
+    }
+}
 
