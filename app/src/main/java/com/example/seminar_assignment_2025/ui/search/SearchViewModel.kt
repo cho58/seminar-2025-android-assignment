@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.seminar_assignment_2025.data.Movie
 import com.example.seminar_assignment_2025.data.MovieRepository
+import com.example.seminar_assignment_2025.data.MovieRepositoryImpl
 import com.example.seminar_assignment_2025.data.SearchHistoryRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -43,9 +44,9 @@ class SearchViewModel(
         }
     }
 
-    fun searchMovies(query: String) {
+    fun searchByTitle(query: String) {
         viewModelScope.launch {
-            _searchResults.value = movieRepository.searchMovies(query)
+            _searchResults.value = movieRepository.searchByTitle(query)
         }
     }
 
@@ -60,7 +61,7 @@ class SearchViewModelFactory(private val application: Application) : ViewModelPr
             @Suppress("UNCHECKED_CAST")
             return SearchViewModel(
                 searchHistoryRepository = SearchHistoryRepository(application),
-                movieRepository = MovieRepository()
+                movieRepository = MovieRepositoryImpl()
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

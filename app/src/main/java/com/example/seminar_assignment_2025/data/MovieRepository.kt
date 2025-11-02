@@ -4,6 +4,11 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
+interface MovieRepository {
+    fun searchByTitle(query: String): List<Movie>
+    fun getGenreName(id: Int): String
+}
+
 @Serializable
 data class MovieDto(
     val id: Int,
@@ -28,7 +33,7 @@ data class GenreListDto(
     val genres: List<GenreDto>
 )
 
-class MovieRepository {
+class MovieRepositoryImpl : MovieRepository {
     private val movieRawData = """[
         {
   "adult": false,
@@ -2090,11 +2095,10 @@ class MovieRepository {
     }
 
     private val genreMap: Map<Int, String> by lazy {
-        json.decodeFromString<GenreListDto>(genreMapData).genres.associateBy( { it.id }, { it.name } )
+        json.decodeFromString<GenreListDto>(genreMapData).genres.associate { it.id to it.name }
     }
 
-
-    fun searchMovies(query: String): List<Movie> {
+    override fun searchByTitle(query: String): List<Movie> {
         return if (query.isBlank()) {
             emptyList()
         } else {
@@ -2114,7 +2118,7 @@ class MovieRepository {
         }
     }
 
-    fun getGenreName(id: Int): String {
+    override fun getGenreName(id: Int): String {
         return genreMap[id] ?: ""
     }
 }

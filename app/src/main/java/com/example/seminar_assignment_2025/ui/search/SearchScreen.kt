@@ -49,6 +49,9 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.seminar_assignment_2025.R
 import com.example.seminar_assignment_2025.data.Movie
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import java.net.URLEncoder
 import kotlin.math.roundToInt
 
 @Composable
@@ -70,7 +73,7 @@ fun SearchScreen(
             onSearch = {
                 if (searchText.text.isNotBlank()) {
                     viewModel.addSearchTerm(searchText.text)
-                    viewModel.searchMovies(searchText.text)
+                    viewModel.searchByTitle(searchText.text)
                 }
             }
         )
@@ -89,8 +92,9 @@ fun SearchScreen(
             }
         } else {
             SearchResultList(movies = searchResults, viewModel = viewModel) { movie ->
-                navController.currentBackStackEntry?.savedStateHandle?.set("movie", movie)
-                navController.navigate("movieDetail")
+                val movieJson = Json.encodeToString(movie)
+                val encodedMovieJson = URLEncoder.encode(movieJson, "UTF-8")
+                navController.navigate("movieDetail/$encodedMovieJson")
             }
         }
     }

@@ -1,9 +1,8 @@
 package com.example.seminar_assignment_2025.data
 
 import kotlinx.serialization.Serializable
-import java.io.Serializable as JavaSerializable // Create an alias
 
-@Serializable // for kotlinx.serialization (JSON)
+@Serializable
 data class Movie(
     val id: Int,
     val title: String,
@@ -14,4 +13,4 @@ data class Movie(
     val backdropPath: String,
     val overview: String,
     val popularity: Double
-) : JavaSerializable
+)
