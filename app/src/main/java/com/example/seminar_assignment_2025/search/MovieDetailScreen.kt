@@ -53,7 +53,9 @@ fun MovieDetailScreen(
                             tint = Color.Black
                         )
                     }
-                }
+                },
+                modifier = Modifier.height(56.dp)
+
             )
         }
     ) { innerPadding ->
@@ -95,7 +97,7 @@ fun MovieDetailScreen(
                 )
             }
 
-            // --- 4. Popularity (스펙) ---
+            // 4. Popularity
             item {
                 DetailSection(
                     title = "Popularity",
