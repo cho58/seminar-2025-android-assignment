@@ -3,6 +3,7 @@ package com.example.seminar_assignment_2025.search
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import com.example.seminar_assignment_2025.search.ApiService
 
 class MovieRepositoryImpl : MovieRepository {
 
@@ -33,14 +34,19 @@ class MovieRepositoryImpl : MovieRepository {
     }
 
     /**
-     * 스펙에 명시된 검색 함수
+     * 제목으로 영화를 검색합니다. (Retrofit 사용)
+     * @param query 검색할 영화 제목
+     * @return 검색된 영화 리스트 (List<Movie>)
      */
     override suspend fun searchByTitle(query: String): List<Movie> {
-        // 6. Default 스레드에서 필터링 실행
-        return withContext(Dispatchers.Default) {
-            getAllMovies().filter { movie ->
-                movie.title.contains(query, ignoreCase = true)
-            }
+        return try {
+            // ApiService의 searchMovie 함수 호출
+            val response = apiService.searchMovie(query = query)
+            response.results // 결과 리스트 반환
+        } catch (e: Exception) {
+            println("Error fetching movies: ${e.message}")
+            e.printStackTrace()
+            emptyList()
         }
     }
 }

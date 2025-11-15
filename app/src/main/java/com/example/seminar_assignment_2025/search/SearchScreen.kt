@@ -56,9 +56,8 @@ fun SearchScreen(viewModel: SearchViewModel, navController: NavController) {
                 .onFocusChanged { focusState ->
                     isSearchFocused = focusState.isFocused
                 },
-            placeholder = { Text("영화 검색...") }, // 스펙 이미지 참고
+            placeholder = { Text("영화 검색...") },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
-            // 스펙: 검색 바에 X 버튼
             trailingIcon = {
                 if (query.isNotEmpty()) {
                     IconButton(onClick = viewModel::onClearQuery) {

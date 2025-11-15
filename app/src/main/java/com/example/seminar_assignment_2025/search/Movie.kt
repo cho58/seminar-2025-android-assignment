@@ -1,7 +1,13 @@
 package com.example.seminar_assignment_2025.search
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+// TMDB API의 페이징된 응답 구조
+@Serializable
+data class ApiResponse<T>(
+    val results: List<T>
+)
 @Serializable
 data class Movie(
     val adult: Boolean = false,
