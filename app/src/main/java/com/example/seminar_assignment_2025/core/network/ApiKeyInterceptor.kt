@@ -1,4 +1,4 @@
-package com.example.seminar_assignment_2025.network
+package com.example.seminar_assignment_2025.core.network
 
 import okhttp3.Interceptor
 import okhttp3.Response

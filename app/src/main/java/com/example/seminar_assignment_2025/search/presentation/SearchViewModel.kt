@@ -1,20 +1,27 @@
-package com.example.seminar_assignment_2025.search
+package com.example.seminar_assignment_2025.search.presentation
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.seminar_assignment_2025.search.domain.Movie
+import com.example.seminar_assignment_2025.search.domain.MovieDetail
+import com.example.seminar_assignment_2025.search.data.repository.MovieRepository
+import com.example.seminar_assignment_2025.search.data.local.RecentSearchRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import jakarta.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class SearchViewModel(
+@HiltViewModel
+class SearchViewModel @Inject constructor(
     private val recentRepo: RecentSearchRepository,
     private val movieRepo: MovieRepository
 ) : ViewModel() {
 
     val recentSearches = recentRepo.getRecentSearches()
-        .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery = _searchQuery.asStateFlow()
@@ -27,6 +34,10 @@ class SearchViewModel(
 
     fun onClearQuery() {
         _searchQuery.value = ""
+    }
+
+    fun onQueryChanged(query: String) {
+        _searchQuery.value = query
     }
 
     fun onSearchClicked() {
@@ -54,7 +65,7 @@ class SearchViewModel(
         }
     }
 
-    fun RecentSearchItemClicked(keyword: String) {
+    fun recentSearchItemClicked(keyword: String) {
         viewModelScope.launch {
             _searchQuery.value = keyword
             _searchResults.value = movieRepo.searchByTitle(keyword)
@@ -71,18 +82,5 @@ class SearchViewModel(
         viewModelScope.launch {
             recentRepo.clearAll()
         }
-    }
-}
-
-class SearchViewModelFactory(
-    private val movieRepo: MovieRepository,
-    private val recentSearchRepo: RecentSearchRepository,
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(SearchViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return SearchViewModel(recentSearchRepo, movieRepo) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

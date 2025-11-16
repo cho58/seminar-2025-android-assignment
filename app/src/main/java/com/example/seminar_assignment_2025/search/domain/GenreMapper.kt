@@ -1,6 +1,4 @@
-package com.example.seminar_assignment_2025.search
-
-import kotlin.collections.get
+package com.example.seminar_assignment_2025.search.domain
 
 object GenreMapper {
     private val genreMap = mapOf(

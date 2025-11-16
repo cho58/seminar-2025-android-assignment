@@ -1,4 +1,4 @@
-package com.example.seminar_assignment_2025.search
+package com.example.seminar_assignment_2025.search.presentation
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -29,8 +29,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import com.example.seminar_assignment_2025.R
 import coil.compose.AsyncImage
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.navigation.NavController
+import com.example.seminar_assignment_2025.search.domain.GenreMapper
+import com.example.seminar_assignment_2025.search.domain.Movie
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -113,7 +114,7 @@ fun SearchScreen(viewModel: SearchViewModel, navController: NavController) {
                     RecentSearchSection(
                         items = recentList,
                         onClickItem = { keyword ->
-                            viewModel.RecentSearchItemClicked(keyword)
+                            viewModel.recentSearchItemClicked(keyword)
                             focusManager.clearFocus()
                             isSearchFocused = false
                         },

@@ -1,4 +1,4 @@
-package com.example.seminar_assignment_2025
+package com.example.seminar_assignment_2025.ui
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -33,18 +33,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.seminar_assignment_2025.game.Game2048Screen
-import com.example.seminar_assignment_2025.search.MovieRepositoryImpl
-import com.example.seminar_assignment_2025.search.RecentSearchRepository
-import com.example.seminar_assignment_2025.search.SearchScreen
-import com.example.seminar_assignment_2025.search.SearchViewModel
+import com.example.seminar_assignment_2025.search.presentation.SearchScreen
+import com.example.seminar_assignment_2025.search.presentation.SearchViewModel
 import androidx.activity.viewModels
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.seminar_assignment_2025.search.SearchViewModelFactory
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.seminar_assignment_2025.search.MovieDetailScreen
+import com.example.seminar_assignment_2025.R
+import com.example.seminar_assignment_2025.search.presentation.MovieDetailScreen
+import dagger.hilt.android.AndroidEntryPoint
 
 sealed class Tab(val title: String) {
     data object Home : Tab("Home")
@@ -54,14 +52,9 @@ sealed class Tab(val title: String) {
     data object Profile : Tab("Profile")
 }
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private val vm: SearchViewModel by viewModels {
-        val movieRepo = MovieRepositoryImpl()
-        // 1. RecentSearchRepository 생성 (Context 전달)
-        val recentRepo = RecentSearchRepository(applicationContext)
-        // 2. 팩토리에 두 개의 Repository 전달
-        SearchViewModelFactory(movieRepo, recentRepo)
-    }
+    private val vm: SearchViewModel by viewModels()
 
     @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,7 +66,9 @@ class MainActivity : ComponentActivity() {
             var currentIndex by remember { mutableStateOf(0) }
             var previousIndex by remember { mutableStateOf(0) }
 
-            NavHost(navController = navController, startDestination = "main") {
+            NavHost(navController = navController,
+                    startDestination = "main"
+            ){
 
                 // 3. "메인 화면" (기존의 탭 + Scaffold)
                 composable("main") {
@@ -92,14 +87,7 @@ class MainActivity : ComponentActivity() {
 
                 // 4. "상세 화면" (신규)
                 composable("detail") {
-                    val viewModel: SearchViewModel = viewModel(
-                        factory = SearchViewModelFactory(
-                            movieRepo = MovieRepositoryImpl(),
-                            recentSearchRepo = RecentSearchRepository(LocalContext.current)
-                        )
-                    )
-
-                    val movieDetail by viewModel.selectedMovieDetail.collectAsState()
+                    val movieDetail by vm.selectedMovieDetail.collectAsState()
 
                     MovieDetailScreen(
                         movie = movieDetail,

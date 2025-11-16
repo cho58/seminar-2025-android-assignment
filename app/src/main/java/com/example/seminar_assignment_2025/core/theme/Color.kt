@@ -1,4 +1,4 @@
-package com.example.seminar_assignment_2025.ui.theme
+package com.example.seminar_assignment_2025.core.theme
 
 import androidx.compose.ui.graphics.Color
 

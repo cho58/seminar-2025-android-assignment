@@ -1,7 +1,8 @@
-package com.example.seminar_assignment_2025.search
+package com.example.seminar_assignment_2025.search.presentation
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,8 +14,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -24,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.seminar_assignment_2025.R
+import com.example.seminar_assignment_2025.search.domain.MovieDetail
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -47,7 +48,6 @@ fun MovieDetailScreen(
                             painter = painterResource(id = R.drawable.arrow_back),
                             contentDescription = "아이콘 설명",
 
-                            // Icon의 기본 크기를 사용하거나 Modifier로 지정
                             modifier = Modifier.size(15.88.dp),
 
                             tint = Color.Black
@@ -83,16 +83,21 @@ fun MovieDetailScreen(
                     backdropPath = movie.backdrop_path,
                     posterPath = movie.poster_path,
                     title = movie.title,
-                    voteAverage = movie.vote_average
+                    voteAverage = movie.vote_average,
+                    runtimeMinutes = movie.runtime,
+                    releaseDate = movie.release_date,
+                    isAdult = movie.adult
                 )
             }
 
 
-            // 2. 장르 (칩, 40% 회색)
+            // 2. 장르
             item {
                 val genres = movie.genres.map { it.name }
-                FlowRow(
-                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp),
+                Row(
+                    modifier = Modifier
+                        .padding(start = 16.dp, end = 16.dp, top = 16.dp)
+                        .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     genres.forEach { genreName ->
@@ -100,6 +105,7 @@ fun MovieDetailScreen(
                     }
                 }
             }
+
 
             // 3. Summary
             item {
@@ -126,14 +132,14 @@ fun MovieDetailScreen(
             item {
                 DetailSection(
                     title = "Budget",
-                    content = movie.budget.toString()
+                    content = formatCurrency(movie.budget)
                 )
             }
 
             item {
                 DetailSection(
                     title = "Revenue",
-                    content = movie.revenue.toString()
+                    content = formatCurrency(movie.revenue)
                 )
             }
         }
@@ -145,32 +151,35 @@ private fun ImageHeader(
     backdropPath: String?,
     posterPath: String?,
     title: String,
-    voteAverage: Double
+    voteAverage: Double,
+    runtimeMinutes: Int?,
+    releaseDate: String,
+    isAdult: Boolean
 ) {
+    val runtimeText = formatRuntime(runtimeMinutes)
+    val yearText = if (releaseDate.length >= 4) releaseDate.substring(0, 4) else ""
+    val ageLabel = if (isAdult) "R18+" else "All Ages"
+    val ageColor = if (isAdult) Color(0xFFFF3B30) else Color.White
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(301.dp)
             .graphicsLayer(clip = false)
     ) {
-
+        // 배경(backdrop)
         AsyncImage(
-            model = "https://image.tmdb.org/t/p/w780$backdropPath",
+            model = "https://image.tmdb.org/t/p/original$backdropPath",
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
 
+        // 40% 블랙 오버레이
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)),
-                        startY = 300f, // 그라데이션 시작 위치
-                        endY = Float.POSITIVE_INFINITY
-                    )
-                )
+                .background(Color.Black.copy(alpha = 0.4f))
         )
 
         Row(
@@ -186,12 +195,13 @@ private fun ImageHeader(
                 contentDescription = "Poster",
                 modifier = Modifier
                     .width(164.dp)
-                    .height(246.dp)
+                    .height(246.dp),
+                contentScale = ContentScale.Crop
             )
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            // 제목 + 평점
+            // 제목 + 평점 + 러닝타임/연도/연령 라벨
             Column(
                 modifier = Modifier.weight(1f)
             ) {
@@ -201,11 +211,13 @@ private fun ImageHeader(
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
+
                 Spacer(modifier = Modifier.height(4.dp))
-                // 평점
+
+                // 평점 + 별
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = String.format("%.1f", voteAverage),
+                        text = String.format(Locale.US, "%.1f", voteAverage),
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         fontSize = 10.sp
@@ -249,6 +261,36 @@ private fun ImageHeader(
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // 1h 40m · 2003 · R18+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (runtimeText.isNotEmpty()) {
+                        Text(
+                            text = runtimeText,
+                            color = Color.White,
+                            fontSize = 10.sp
+                        )
+                    }
+                    if (yearText.isNotEmpty()) {
+                        if (runtimeText.isNotEmpty()) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+                        Text(
+                            text = yearText,
+                            color = Color.White,
+                            fontSize = 10.sp
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = ageLabel,
+                        color = ageColor,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         }
     }
@@ -287,4 +329,21 @@ private fun DetailSection(title: String, content: String) {
             lineHeight = 22.sp
         )
     }
+}
+
+private fun formatRuntime(runtimeMinutes: Int?): String {
+    if (runtimeMinutes == null || runtimeMinutes <= 0) return ""
+    val hours = runtimeMinutes / 60
+    val minutes = runtimeMinutes % 60
+    return if (hours > 0) {
+        if (minutes > 0) "${hours}h ${minutes}m" else "${hours}h"
+    } else {
+        "${minutes}m"
+    }
+}
+
+private fun formatCurrency(amount: Int): String {
+    if (amount <= 0) return "-"
+    val formatted = String.format(Locale.US, "%,d", amount)
+    return "$$formatted"
 }

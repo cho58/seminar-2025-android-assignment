@@ -1,4 +1,4 @@
-package com.example.seminar_assignment_2025
+package com.example.seminar_assignment_2025.profile
 
 import android.content.Intent
 import android.net.Uri
@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import com.example.seminar_assignment_2025.R
 
 class ProfileActivity  : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

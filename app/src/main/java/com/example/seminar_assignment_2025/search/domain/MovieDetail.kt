@@ -1,4 +1,4 @@
-package com.example.seminar_assignment_2025.search
+package com.example.seminar_assignment_2025.search.domain
 
 import kotlinx.serialization.Serializable
 
