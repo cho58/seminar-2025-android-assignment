@@ -1,6 +1,7 @@
 package com.example.seminar_assignment_2025.search
 
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface ApiService {
@@ -14,6 +15,14 @@ interface ApiService {
     @GET("search/movie")
     suspend fun searchMovie(
         @Query("query") query: String,
+        @Query("language") language: String = "ko-KR",     // 한글 제목/줄거리
+        @Query("include_adult") includeAdult: Boolean = false,
     ): ApiResponse<Movie>
+
+    @GET("movie/{movie_id}")
+    suspend fun getMovieDetail(
+        @Path("movie_id") movieId: Int,
+        @Query("language") language: String = "ko-KR",
+    ): MovieDetail
 
 }

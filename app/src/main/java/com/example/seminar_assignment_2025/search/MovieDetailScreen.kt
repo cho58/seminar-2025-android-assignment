@@ -28,7 +28,7 @@ import com.example.seminar_assignment_2025.R
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun MovieDetailScreen(
-    movie: Movie,
+    movie: MovieDetail?,
     onBackClicked: () -> Unit // 뒤로가기 람다
 ) {
     Scaffold(
@@ -37,7 +37,7 @@ fun MovieDetailScreen(
             CenterAlignedTopAppBar (
                 title = { 
                     Text(
-                        text = movie.title,
+                        text = movie?.title ?: "",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
                     ) },
@@ -59,6 +59,18 @@ fun MovieDetailScreen(
             )
         }
     ) { innerPadding ->
+        if (movie == null) {
+            Box(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+            return@Scaffold
+        }
+
         // 2. 스크롤 가능한 본문
         LazyColumn(
             modifier = Modifier
@@ -78,7 +90,7 @@ fun MovieDetailScreen(
 
             // 2. 장르 (칩, 40% 회색)
             item {
-                val genres = GenreMapper.getGenreNames(movie.genre_ids).split(", ")
+                val genres = movie.genres.map { it.name }
                 FlowRow(
                     modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -97,11 +109,31 @@ fun MovieDetailScreen(
                 )
             }
 
-            // 4. Popularity
             item {
                 DetailSection(
-                    title = "Popularity",
-                    content = movie.popularity.toString()
+                    title = "Original Title",
+                    content = movie.original_title
+                )
+            }
+
+            item {
+                DetailSection(
+                    title = "Status",
+                    content = movie.status
+                )
+            }
+
+            item {
+                DetailSection(
+                    title = "Budget",
+                    content = movie.budget.toString()
+                )
+            }
+
+            item {
+                DetailSection(
+                    title = "Revenue",
+                    content = movie.revenue.toString()
                 )
             }
         }

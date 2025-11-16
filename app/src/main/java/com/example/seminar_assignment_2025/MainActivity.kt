@@ -38,6 +38,7 @@ import com.example.seminar_assignment_2025.search.RecentSearchRepository
 import com.example.seminar_assignment_2025.search.SearchScreen
 import com.example.seminar_assignment_2025.search.SearchViewModel
 import androidx.activity.viewModels
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.seminar_assignment_2025.search.SearchViewModelFactory
 import androidx.navigation.compose.NavHost
@@ -91,13 +92,19 @@ class MainActivity : ComponentActivity() {
 
                 // 4. "상세 화면" (신규)
                 composable("detail") {
-                    val movie by vm.selectedMovie.collectAsState()
-                    movie?.let {
-                        MovieDetailScreen(
-                            movie = it,
-                            onBackClicked = { navController.popBackStack() }
+                    val viewModel: SearchViewModel = viewModel(
+                        factory = SearchViewModelFactory(
+                            movieRepo = MovieRepositoryImpl(),
+                            recentSearchRepo = RecentSearchRepository(LocalContext.current)
                         )
-                    }
+                    )
+
+                    val movieDetail by viewModel.selectedMovieDetail.collectAsState()
+
+                    MovieDetailScreen(
+                        movie = movieDetail,
+                        onBackClicked = { navController.popBackStack() }
+                    )
                 }
             }
         }

@@ -22,49 +22,55 @@ class SearchViewModel(
     private val _searchResults = MutableStateFlow<List<Movie>>(emptyList())
     val searchResults = _searchResults.asStateFlow()
 
-    private val _selectedMovie = MutableStateFlow<Movie?>(null)
-    val selectedMovie = _selectedMovie.asStateFlow()
+    private val _selectedMovieDetail = MutableStateFlow<MovieDetail?>(null)
+    val selectedMovieDetail = _selectedMovieDetail.asStateFlow()
 
     fun onClearQuery() {
         _searchQuery.value = ""
     }
 
-    // 스펙: 최근 검색어 아이템 클릭 (검색어로 채우기)
-    fun RecentSearchItemClicked(query: String) {
-        _searchQuery.value = query
-    }
-
-    // 스펙: 최근 검색어 개별 삭제 ('X')
-    fun deleteRecent(query: String) {
-        viewModelScope.launch {
-            recentRepo.deleteSearch(query)
-        }
-    }
-
-    // 스펙: 최근 검색어 전체 삭제
-    fun clearRecent() {
-        viewModelScope.launch {
-            recentRepo.clearAll()
-        }
-    }
-    fun onQueryChanged(query: String) {
-        _searchQuery.value = query
-    }
-
     fun onSearchClicked() {
-        val query = _searchQuery.value
-        if (query.isBlank()) return // 빈 검색어는 무시
-
         viewModelScope.launch {
-            // 1. 영화 검색 실행
-            _searchResults.value = movieRepo.searchByTitle(query)
-            // 2. 최근 검색어에 저장
+            val query = _searchQuery.value.trim()
+            if (query.isBlank()) return@launch
+
+            // 최근검색에 저장
             recentRepo.addSearch(query)
+
+            _searchResults.value = movieRepo.searchByTitle(query)
         }
     }
 
     fun selectMovie(movie: Movie) {
-        _selectedMovie.value = movie
+        viewModelScope.launch {
+            _selectedMovieDetail.value = null   // 먼저 로딩 상태로
+            try {
+                val detail = movieRepo.getMovieDetail(movie.id)
+                _selectedMovieDetail.value = detail
+            } catch (e: Exception) {
+                e.printStackTrace()
+                // 필요하면 여기서 에러 상태 관리
+            }
+        }
+    }
+
+    fun RecentSearchItemClicked(keyword: String) {
+        viewModelScope.launch {
+            _searchQuery.value = keyword
+            _searchResults.value = movieRepo.searchByTitle(keyword)
+        }
+    }
+
+    fun deleteRecent(keyword: String) {
+        viewModelScope.launch {
+            recentRepo.deleteSearch(keyword)
+        }
+    }
+
+    fun clearRecent() {
+        viewModelScope.launch {
+            recentRepo.clearAll()
+        }
     }
 }
 

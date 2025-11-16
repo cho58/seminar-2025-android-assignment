@@ -7,7 +7,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
-import com.example.seminar_assignment_2025.BuildConfig
+import com.example.seminar_assignment_2025.search.BuildConfig
 
 object ApiProvider {
     private const val BASE_URL = "https://api.themoviedb.org/3/"
@@ -18,7 +18,6 @@ object ApiProvider {
         isLenient = true
     }
 
-    // API 키를 모든 요청에 쿼리 파라미터로 추가하는 인터셉터
     private val apiKeyInterceptor = Interceptor { chain ->
         val originalRequest = chain.request()
         val originalUrl = originalRequest.url
